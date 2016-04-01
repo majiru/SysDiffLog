@@ -14,30 +14,55 @@
 
 void watch_Files();
 void createDaemon();
-int getPid();
-void setPid();
 void wrapUp();
+void getWorkingDirectory(FILE *fp, const char *buffer);
+void setPid();
+int getPid();
 
-int main(int argc, char *argv[]){
+char directoryToWatch[255] = "Directory Not Set";
+
+int main(int argc, char **argv){
     int pid;
-    
+        
     if(argc < 2){
         printf("Usage: start, stop\n");
         printf("Start: Starts Daemon\n");
         printf("Stop: Stops Daemon\n");
         return 1;
     }
-    if(!strcmp(argv[1], "start")){
-        if((pid = getPid()) != -1 ){
-            printf("Program seems to be running under PID %d\n", pid);
-        }else{
-            createDaemon();
+
+    while(*argv != NULL ){
+        //printf("Got Arg: %s \n", *argv);
+        if(**argv == '-'){
+            //printf("Got Flag: %c \n", *(*argv+1)  );
+            switch(*(*argv+1)){
+                case 'd':
+                case 'D':
+                    strcpy(directoryToWatch, *(++argv));
+                    //printf("Got directory %s \n", directoryToWatch);
+                    break;
+            
+            }
+        }else if(!strcmp(*argv, "start")){
+            if((pid = getPid()) != -1 ){
+                printf("Program seems to be running under PID %d\n", pid);
+            }else{
+                createDaemon();
+                break;
+            }
+        }else if(!strcmp(*argv, "stop")){
+            if(getPid() == -1 ){
+                printf("The program appears to not be running or the pid file can not be found/read \n");
+                return 2;
+            }else{ 
+                kill(getPid(), SIGTERM);
+                return 0;
+            }
         }
-    }else if(!strcmp(argv[1], "stop")){
-        kill(getPid(), SIGTERM);
-        return 0;
-    }
-    return 0;
+        
+        ++argv;
+    } 
+    return 5;
 }
 
 int getPid(){
@@ -81,9 +106,7 @@ void createDaemon(){
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
-    openlog("SysDifLog", LOG_PID, LOG_DAEMON);
     watch_Files();
-    closelog();
 }
     
 void watch_Files(){    
@@ -91,6 +114,8 @@ void watch_Files(){
     int fd;
     int wd;
     char buffer[BUF_LEN];
+
+    openlog("SysDifLog", LOG_PID, LOG_DAEMON);
 
     fd = inotify_init();
 
