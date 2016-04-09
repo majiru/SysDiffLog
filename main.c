@@ -20,7 +20,6 @@ int main(int argc, char **argv){
     directoryToWatch[0] = '\0';
     logDir[0] = '\0';
 
-
     if(argc < 2){
         printf("Usage: start, stop\n");
         printf("Start: Starts Daemon\n");
@@ -41,6 +40,8 @@ int main(int argc, char **argv){
                 case 'l':
                 case 'L':
                     strcpy(logDir, *(++argv));
+                    //printf("Set logDir as %s\n", logDir);
+                    break;
                 default:
                     printf("Flag %c is not recognized\n", *(*argv+1));
             }

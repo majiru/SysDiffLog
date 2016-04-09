@@ -11,6 +11,7 @@
 
 
 extern char logDir[255];
+extern int isUsingSyslog;
 void wrapUp();
 
 int getPid(){
@@ -31,6 +32,8 @@ void setPid(int pid){
 }
 
 void createDaemon(){
+   printf("logDir is ... %s\n ", logDir);
+   
     pid_t pid, sid;
     
     pid = fork();
@@ -54,8 +57,12 @@ void createDaemon(){
 
     openlog("SysDifLog", LOG_PID, LOG_DAEMON);
 
-    if(logDir[0]!='\0') chdir(logDir);
-
+    if(logDir[0]!='\0'){ 
+        isUsingSyslog=0;
+        chdir(logDir);
+    }else{
+        isUsingSyslog=1;
+    }
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
