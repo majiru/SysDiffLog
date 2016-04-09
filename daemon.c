@@ -32,8 +32,6 @@ void setPid(int pid){
 }
 
 void createDaemon(){
-   printf("logDir is ... %s\n ", logDir);
-   
     pid_t pid, sid;
     
     pid = fork();
