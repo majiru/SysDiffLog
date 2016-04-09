@@ -12,11 +12,11 @@
 #define BUF_LEN     (1024 * (EVENT_SIZE + 16))
 
 extern int isUsingSyslog;
+extern char directoryToWatch[255];
 
 void watch_Files(){    
     int length, i = 0;
     int fd;
-    int wd;
     char buffer[BUF_LEN];
     char objectType[16] = "NULL";
     char message_buffer[255];
@@ -25,7 +25,7 @@ void watch_Files(){
 
     if (fd < 0) perror("inotify_init");
     
-    wd = inotify_add_watch(fd, ".", IN_MODIFY | IN_CREATE | IN_DELETE | IN_ISDIR);
+    parseDirectoryInput(directoryToWatch, fd);
 
     while(1){
         length = read(fd, buffer, BUF_LEN);
@@ -62,8 +62,6 @@ void watch_Files(){
         }
 
     }
-    inotify_rm_watch(fd, wd);
-    close(fd);
 }
 
 void logChangesToSyslog(char message[]){
@@ -74,4 +72,19 @@ void logChangesToFile(char message[]){
     FILE *logfp = fopen("sysDiffLog", "a");
     fprintf(logfp, "%s\n", message);
     fclose(logfp);
+}
+
+void parseDirectoryInput(char argument[], int fd){
+    int i, x;
+    x = 0;
+    char buffer[255];
+    for(i=0; argument[i] != '\0'; i++){
+        if(argument[i] == ','){
+            inotify_add_watch(fd, buffer, IN_MODIFY | IN_CREATE | IN_DELETE | IN_ISDIR);
+            x=0;
+        }else{
+            buffer[x] = argument[i];
+            buffer[++x] = '\0';
+        }
+    }
 }
