@@ -53,7 +53,7 @@ void createDaemon(){
 
     signal(SIGTERM, wrapUp);
 
-    openlog("SysDifLog", LOG_PID, LOG_DAEMON);
+    openlog("SysDiffLog", LOG_PID, LOG_DAEMON);
 
     if(logDir[0]!='\0'){ 
         isUsingSyslog=0;

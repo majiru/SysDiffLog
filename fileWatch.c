@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "fileWatch.h"
 #include "global.h"
@@ -20,13 +22,16 @@ void watch_Files(){
     char buffer[BUF_LEN];
     char objectType[16] = "NULL";
     char message_buffer[255];
+    char *currentTime;
+
 
     fd = inotify_init();
 
     if (fd < 0) perror("inotify_init");
     
     parseDirectoryInput(directoryToWatch, fd);
-
+    
+    logChangesToSyslog("--SysDiffLogStarted--");
     while(1){
         length = read(fd, buffer, BUF_LEN);
         if (length < 0) perror("read");
@@ -36,18 +41,20 @@ void watch_Files(){
         while (i < length) {
             struct inotify_event *event = (struct inotify_event *) &buffer[i];
             if (event->len) {
+                currentTime = getCurrentTimeString();
                 if(event->mask & IN_ISDIR){
                     strcpy(objectType, "directory");
                 }else{
                     strcpy(objectType, "file");
                 }
                 if (event->mask & IN_CREATE) {
-                    sprintf(message_buffer, "The %s %s was created.\n", objectType ,event->name);
+                    sprintf(message_buffer, "%s: The %s %s was created.\n", currentTime, objectType ,event->name);
                 } else if (event->mask & IN_DELETE) {
-                   sprintf(message_buffer,"The %s %s was deleted.\n", objectType ,event->name);
+                   sprintf(message_buffer,"%s: The %s %s was deleted.\n", currentTime, objectType ,event->name);
                 } else if (event->mask & IN_MODIFY) {
-                    sprintf(message_buffer, "The %s %s was modified.\n", objectType ,event->name);
+                    sprintf(message_buffer, "%s: The %s %s was modified.\n", currentTime, objectType ,event->name);
                 }
+                free(currentTime);
             }
             
             if(message_buffer[0] != '\0'){
@@ -66,6 +73,13 @@ void watch_Files(){
 
 void logChangesToSyslog(char message[]){
     syslog(LOG_NOTICE, message);
+}
+
+char *getCurrentTimeString(){
+    char *tBuff = malloc (sizeof(char) * 100);
+    time_t currentTime = time (0);
+    strftime (tBuff, 100, "%Y-%m-%d %H:%M:%S", localtime (&currentTime));
+    return tBuff;
 }
 
 void logChangesToFile(char message[]){
