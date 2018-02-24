@@ -7,18 +7,26 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <libconfig.h>
 
 #include "daemon.h"
 #include "global.h"
 #include "fileWatch.h"
+#include "settings.h"
 
 extern char logDir[255];
 extern char directoryToWatch[255];
+extern int isUsingSyslog;
 
 int main(int argc, char **argv){
     int pid;
     directoryToWatch[0] = '\0';
     logDir[0] = '\0';
+    config_t cfg = initConfig();
+    readConfig(&cfg);
+    //printf("%s", logDir);
+    //printf("%s", directoryToWatch);
+    //printf("%d", isUsingSyslog);
 
     if(argc < 2){
         printf("Usage: start, stop\n");
@@ -57,14 +65,13 @@ int main(int argc, char **argv){
             if(getPid() == -1 ){
                 printf("The program appears to not be running or the pid file can not be found/read \n");
                 return 2;
-            }else{ 
+            }else{
                 killProcess();
                 return 0;
             }
         }
-        
+
         ++argv;
-    } 
+    }
     return 5;
 }
-

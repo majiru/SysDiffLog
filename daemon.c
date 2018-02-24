@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -17,8 +18,8 @@ void wrapUp();
 int getPid(){
     FILE *pidfp;
     int pid;
-    if(access("pid", F_OK) == -1) return -1;
-    pidfp = fopen("pid", "r");
+    if(access("/tmp/SysDiffLog_pid", F_OK) == -1) return -1;
+    pidfp = fopen("/tmp/sysdifflog_pid", "r");
     fscanf(pidfp, "%d", &pid);
     fclose(pidfp);
     return pid;
@@ -26,22 +27,23 @@ int getPid(){
 
 void setPid(int pid){
     FILE *pidfp;
-    pidfp = fopen("pid", "w");
+    unlink("/home/moody/SysDiffLog/pid");
+    pidfp = fopen("/tmp/sysdifflog_pid", "w");
     fprintf(pidfp, "%d", pid);
     fclose(pidfp);
 }
 
 void createDaemon(){
     pid_t pid, sid;
-    
+
     pid = fork();
-    
+
     if(pid < 0){
         exit(1);
     }else if(pid != 0){
         exit(0);
     }
-    
+
     umask(0);
 
     sid = setsid();
@@ -55,12 +57,6 @@ void createDaemon(){
 
     openlog("SysDiffLog", LOG_PID, LOG_DAEMON);
 
-    if(logDir[0]!='\0'){ 
-        isUsingSyslog=0;
-        chdir(logDir);
-    }else{
-        isUsingSyslog=1;
-    }
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
@@ -72,6 +68,6 @@ void killProcess(){
 
 void wrapUp(){
     closelog();
-    unlink("pid");
+    unlink("/tmp/sysdifflog_pid");
     exit(0);
 }

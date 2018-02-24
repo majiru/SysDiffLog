@@ -16,7 +16,7 @@
 extern int isUsingSyslog;
 extern char directoryToWatch[255];
 
-void watch_Files(){    
+void watch_Files(){
     int length, i = 0;
     int fd;
     char buffer[BUF_LEN];
@@ -28,10 +28,9 @@ void watch_Files(){
     fd = inotify_init();
 
     if (fd < 0) perror("inotify_init");
-    
+
     parseDirectoryInput(directoryToWatch, fd);
-    
-    logChangesToSyslog("--SysDiffLogStarted--");
+
     while(1){
         length = read(fd, buffer, BUF_LEN);
         if (length < 0) perror("read");
@@ -56,7 +55,7 @@ void watch_Files(){
                 }
                 free(currentTime);
             }
-            
+
             if(message_buffer[0] != '\0'){
                 if(isUsingSyslog){
                     logChangesToSyslog(message_buffer);
@@ -92,6 +91,7 @@ void parseDirectoryInput(char argument[], int fd){
     int i, x;
     x = 0;
     char buffer[255];
+    buffer[0] = '\0';
     for(i=0; argument[i] != '\0'; i++){
         if(argument[i] == ','){
             inotify_add_watch(fd, buffer, IN_MODIFY | IN_CREATE | IN_DELETE | IN_ISDIR);
@@ -100,5 +100,6 @@ void parseDirectoryInput(char argument[], int fd){
             buffer[x] = argument[i];
             buffer[++x] = '\0';
         }
+        inotify_add_watch(fd, buffer, IN_MODIFY | IN_CREATE | IN_DELETE | IN_ISDIR);
     }
 }
